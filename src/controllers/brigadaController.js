@@ -114,27 +114,27 @@ const updateBrigada = async (req, res) => {
     } = req.body;
     
     const pool = await getConnection();
-    const result = await pool.request()
-      .input('id', sql.Int, id)
-      .input('NombreBrigada', sql.NVarChar, NombreBrigada)
-      .input('CantidadBomberosActivos', sql.Int, CantidadBomberosActivos)
-      .input('ContactoCelularComandante', sql.NVarChar, ContactoCelularComandante)
-      .input('EncargadoLogistica', sql.NVarChar, EncargadoLogistica)
-      .input('ContactoCelularLogistica', sql.NVarChar, ContactoCelularLogistica)
-      .input('NumeroEmergenciaPublico', sql.NVarChar, NumeroEmergenciaPublico)
-      .query(`
-        UPDATE Brigadas 
-        SET 
-          NombreBrigada = @NombreBrigada,
-          CantidadBomberosActivos = @CantidadBomberosActivos,
-          ContactoCelularComandante = @ContactoCelularComandante,
-          EncargadoLogistica = @EncargadoLogistica,
-          ContactoCelularLogistica = @ContactoCelularLogistica,
-          NumeroEmergenciaPublico = @NumeroEmergenciaPublico
-        WHERE ID = @id AND Activo = 1
-      `);
+    const result = await pool.query(`
+      UPDATE brigadas 
+      SET 
+        nombre_brigada = $1,
+        cantidad_bomberos_activos = $2,
+        contacto_celular_comandante = $3,
+        encargado_logistica = $4,
+        contacto_celular_logistica = $5,
+        numero_emergencia_publico = $6
+      WHERE id = $7 AND activo = true
+    `, [
+      NombreBrigada,
+      CantidadBomberosActivos,
+      ContactoCelularComandante,
+      EncargadoLogistica,
+      ContactoCelularLogistica,
+      NumeroEmergenciaPublico,
+      id
+    ]);
     
-    if (result.rowsAffected[0] === 0) {
+    if (result.rowCount === 0) {
       return res.status(404).json({
         success: false,
         message: 'Brigada no encontrada'
@@ -159,15 +159,13 @@ const deleteBrigada = async (req, res) => {
   try {
     const { id } = req.params;
     const pool = await getConnection();
-    const result = await pool.request()
-      .input('id', sql.Int, id)
-      .query(`
-        UPDATE Brigadas 
-        SET Activo = 0 
-        WHERE ID = @id AND Activo = 1
-      `);
+    const result = await pool.query(`
+      UPDATE brigadas 
+      SET activo = false 
+      WHERE id = $1 AND activo = true
+    `, [id]);
     
-    if (result.rowsAffected[0] === 0) {
+    if (result.rowCount === 0) {
       return res.status(404).json({
         success: false,
         message: 'Brigada no encontrada'

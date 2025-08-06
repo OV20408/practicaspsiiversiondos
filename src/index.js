@@ -16,9 +16,10 @@ app.use(helmet());
 
 
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 
 app.use(express.json({ limit: '10mb' }));

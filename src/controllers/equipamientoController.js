@@ -1,25 +1,21 @@
-const { getConnection, sql } = require('../config/database');
+const { getConnection } = require('../config/database');
 
-// =============================================
-// EQUIPAMIENTO DE ROPA
-// =============================================
+
 
 const getEquipamientoRopa = async (req, res) => {
   try {
     const { brigadaId } = req.params;
     const pool = await getConnection();
-    const result = await pool.request()
-      .input('brigadaId', sql.Int, brigadaId)
-      .query(`
-        SELECT er.*, ctr.Nombre as TipoRopaNombre
-        FROM EquipamientoRopa er
-        INNER JOIN CatTiposRopa ctr ON er.TipoRopaID = ctr.ID
-        WHERE er.BrigadaID = @brigadaId
-      `);
+    const result = await pool.query(`
+      SELECT er.*, ctr.nombre as tipo_ropa_nombre
+      FROM equipamiento_ropa er
+      INNER JOIN cat_tipos_ropa ctr ON er.tipo_ropa_id = ctr.id
+      WHERE er.brigada_id = $1
+    `, [brigadaId]);
     
     res.json({
       success: true,
-      data: result.recordset
+      data: result.rows
     });
   } catch (error) {
     console.error('Error al obtener equipamiento de ropa:', error);
@@ -44,31 +40,28 @@ const createEquipamientoRopa = async (req, res) => {
     } = req.body;
     
     const pool = await getConnection();
-    const result = await pool.request()
-      .input('brigadaId', sql.Int, brigadaId)
-      .input('TipoRopaID', sql.Int, TipoRopaID)
-      .input('CantidadXS', sql.Int, CantidadXS || 0)
-      .input('CantidadS', sql.Int, CantidadS || 0)
-      .input('CantidadM', sql.Int, CantidadM || 0)
-      .input('CantidadL', sql.Int, CantidadL || 0)
-      .input('CantidadXL', sql.Int, CantidadXL || 0)
-      .input('Observaciones', sql.NVarChar, Observaciones)
-      .query(`
-        INSERT INTO EquipamientoRopa (
-          BrigadaID, TipoRopaID, CantidadXS, CantidadS, CantidadM, 
-          CantidadL, CantidadXL, Observaciones
-        )
-        OUTPUT INSERTED.ID
-        VALUES (
-          @brigadaId, @TipoRopaID, @CantidadXS, @CantidadS, @CantidadM,
-          @CantidadL, @CantidadXL, @Observaciones
-        )
-      `);
+    const result = await pool.query(`
+      INSERT INTO equipamiento_ropa (
+        brigada_id, tipo_ropa_id, cantidad_xs, cantidad_s, cantidad_m, 
+        cantidad_l, cantidad_xl, observaciones
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING id
+    `, [
+      brigadaId,
+      TipoRopaID,
+      CantidadXS || 0,
+      CantidadS || 0,
+      CantidadM || 0,
+      CantidadL || 0,
+      CantidadXL || 0,
+      Observaciones
+    ]);
     
     res.status(201).json({
       success: true,
       message: 'Equipamiento de ropa creado exitosamente',
-      data: { ID: result.recordset[0].ID }
+      data: { id: result.rows[0].id }
     });
   } catch (error) {
     console.error('Error al crear equipamiento de ropa:', error);
@@ -79,24 +72,19 @@ const createEquipamientoRopa = async (req, res) => {
   }
 };
 
-// =============================================
-// EQUIPAMIENTO DE BOTAS
-// =============================================
 
 const getEquipamientoBotas = async (req, res) => {
   try {
     const { brigadaId } = req.params;
     const pool = await getConnection();
-    const result = await pool.request()
-      .input('brigadaId', sql.Int, brigadaId)
-      .query(`
-        SELECT * FROM EquipamientoBotas
-        WHERE BrigadaID = @brigadaId
-      `);
+    const result = await pool.query(`
+      SELECT * FROM equipamiento_botas
+      WHERE brigada_id = $1
+    `, [brigadaId]);
     
     res.json({
       success: true,
-      data: result.recordset
+      data: result.rows
     });
   } catch (error) {
     console.error('Error al obtener equipamiento de botas:', error);
@@ -124,34 +112,31 @@ const createEquipamientoBotas = async (req, res) => {
     } = req.body;
     
     const pool = await getConnection();
-    const result = await pool.request()
-      .input('brigadaId', sql.Int, brigadaId)
-      .input('Talla37', sql.Int, Talla37 || 0)
-      .input('Talla38', sql.Int, Talla38 || 0)
-      .input('Talla39', sql.Int, Talla39 || 0)
-      .input('Talla40', sql.Int, Talla40 || 0)
-      .input('Talla41', sql.Int, Talla41 || 0)
-      .input('Talla42', sql.Int, Talla42 || 0)
-      .input('Talla43', sql.Int, Talla43 || 0)
-      .input('OtraTalla', sql.NVarChar, OtraTalla)
-      .input('CantidadOtraTalla', sql.Int, CantidadOtraTalla || 0)
-      .input('Observaciones', sql.NVarChar, Observaciones)
-      .query(`
-        INSERT INTO EquipamientoBotas (
-          BrigadaID, Talla37, Talla38, Talla39, Talla40, Talla41, Talla42, Talla43,
-          OtraTalla, CantidadOtraTalla, Observaciones
-        )
-        OUTPUT INSERTED.ID
-        VALUES (
-          @brigadaId, @Talla37, @Talla38, @Talla39, @Talla40, @Talla41, @Talla42, @Talla43,
-          @OtraTalla, @CantidadOtraTalla, @Observaciones
-        )
-      `);
+    const result = await pool.query(`
+      INSERT INTO equipamiento_botas (
+        brigada_id, talla_37, talla_38, talla_39, talla_40, talla_41, talla_42, talla_43,
+        otra_talla, cantidad_otra_talla, observaciones
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      RETURNING id
+    `, [
+      brigadaId,
+      Talla37 || 0,
+      Talla38 || 0,
+      Talla39 || 0,
+      Talla40 || 0,
+      Talla41 || 0,
+      Talla42 || 0,
+      Talla43 || 0,
+      OtraTalla,
+      CantidadOtraTalla || 0,
+      Observaciones
+    ]);
     
     res.status(201).json({
       success: true,
       message: 'Equipamiento de botas creado exitosamente',
-      data: { ID: result.recordset[0].ID }
+      data: { id: result.rows[0].id }
     });
   } catch (error) {
     console.error('Error al crear equipamiento de botas:', error);
@@ -162,24 +147,19 @@ const createEquipamientoBotas = async (req, res) => {
   }
 };
 
-// =============================================
-// EQUIPAMIENTO DE GUANTES
-// =============================================
 
 const getEquipamientoGuantes = async (req, res) => {
   try {
     const { brigadaId } = req.params;
     const pool = await getConnection();
-    const result = await pool.request()
-      .input('brigadaId', sql.Int, brigadaId)
-      .query(`
-        SELECT * FROM EquipamientoGuantes
-        WHERE BrigadaID = @brigadaId
-      `);
+    const result = await pool.query(`
+      SELECT * FROM equipamiento_guantes
+      WHERE brigada_id = $1
+    `, [brigadaId]);
     
     res.json({
       success: true,
-      data: result.recordset
+      data: result.rows
     });
   } catch (error) {
     console.error('Error al obtener equipamiento de guantes:', error);
@@ -206,33 +186,30 @@ const createEquipamientoGuantes = async (req, res) => {
     } = req.body;
     
     const pool = await getConnection();
-    const result = await pool.request()
-      .input('brigadaId', sql.Int, brigadaId)
-      .input('TallaXS', sql.Int, TallaXS || 0)
-      .input('TallaS', sql.Int, TallaS || 0)
-      .input('TallaM', sql.Int, TallaM || 0)
-      .input('TallaL', sql.Int, TallaL || 0)
-      .input('TallaXL', sql.Int, TallaXL || 0)
-      .input('TallaXXL', sql.Int, TallaXXL || 0)
-      .input('OtraTalla', sql.NVarChar, OtraTalla)
-      .input('CantidadOtraTalla', sql.Int, CantidadOtraTalla || 0)
-      .input('Observaciones', sql.NVarChar, Observaciones)
-      .query(`
-        INSERT INTO EquipamientoGuantes (
-          BrigadaID, TallaXS, TallaS, TallaM, TallaL, TallaXL, TallaXXL,
-          OtraTalla, CantidadOtraTalla, Observaciones
-        )
-        OUTPUT INSERTED.ID
-        VALUES (
-          @brigadaId, @TallaXS, @TallaS, @TallaM, @TallaL, @TallaXL, @TallaXXL,
-          @OtraTalla, @CantidadOtraTalla, @Observaciones
-        )
-      `);
+    const result = await pool.query(`
+      INSERT INTO equipamiento_guantes (
+        brigada_id, talla_xs, talla_s, talla_m, talla_l, talla_xl, talla_xxl,
+        otra_talla, cantidad_otra_talla, observaciones
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING id
+    `, [
+      brigadaId,
+      TallaXS || 0,
+      TallaS || 0,
+      TallaM || 0,
+      TallaL || 0,
+      TallaXL || 0,
+      TallaXXL || 0,
+      OtraTalla,
+      CantidadOtraTalla || 0,
+      Observaciones
+    ]);
     
     res.status(201).json({
       success: true,
       message: 'Equipamiento de guantes creado exitosamente',
-      data: { ID: result.recordset[0].ID }
+      data: { id: result.rows[0].id }
     });
   } catch (error) {
     console.error('Error al crear equipamiento de guantes:', error);
@@ -253,87 +230,85 @@ const getEquipamientoGenerico = async (tableName, brigadaId, res) => {
     let query = '';
     
     switch (tableName) {
-      case 'EquipamientoEPP':
+      case 'equipamiento_epp':
         query = `
-          SELECT e.*, cep.Nombre as EquipoNombre
-          FROM EquipamientoEPP e
-          INNER JOIN CatEquipamientoEPP cep ON e.EquipoEPPID = cep.ID
-          WHERE e.BrigadaID = @brigadaId
+          SELECT e.*, cep.nombre as equipo_nombre
+          FROM equipamiento_epp e
+          INNER JOIN cat_equipamiento_epp cep ON e.equipo_epp_id = cep.id
+          WHERE e.brigada_id = $1
         `;
         break;
-      case 'Herramientas':
+      case 'herramientas':
         query = `
-          SELECT h.*, ch.Nombre as HerramientaNombre
-          FROM Herramientas h
-          INNER JOIN CatHerramientas ch ON h.HerramientaID = ch.ID
-          WHERE h.BrigadaID = @brigadaId
+          SELECT h.*, ch.nombre as herramienta_nombre
+          FROM herramientas h
+          INNER JOIN cat_herramientas ch ON h.herramienta_id = ch.id
+          WHERE h.brigada_id = $1
         `;
         break;
-      case 'LogisticaVehiculos':
+      case 'logistica_vehiculos':
         query = `
-          SELECT lv.*, csv.Nombre as ServicioNombre
-          FROM LogisticaVehiculos lv
-          INNER JOIN CatServiciosVehiculos csv ON lv.ServicioVehiculoID = csv.ID
-          WHERE lv.BrigadaID = @brigadaId
+          SELECT lv.*, csv.nombre as servicio_nombre
+          FROM logistica_vehiculos lv
+          INNER JOIN cat_servicios_vehiculos csv ON lv.servicio_vehiculo_id = csv.id
+          WHERE lv.brigada_id = $1
         `;
         break;
-      case 'AlimentacionBebidas':
+      case 'alimentacion_bebidas':
         query = `
-          SELECT ab.*, cab.Nombre as AlimentoNombre
-          FROM AlimentacionBebidas ab
-          INNER JOIN CatAlimentosBebidas cab ON ab.AlimentoBebidaID = cab.ID
-          WHERE ab.BrigadaID = @brigadaId
+          SELECT ab.*, cab.nombre as alimento_nombre
+          FROM alimentacion_bebidas ab
+          INNER JOIN cat_alimentos_bebidas cab ON ab.alimento_bebida_id = cab.id
+          WHERE ab.brigada_id = $1
         `;
         break;
-      case 'EquipoCampo':
+      case 'equipo_campo':
         query = `
-          SELECT ec.*, cec.Nombre as EquipoNombre
-          FROM EquipoCampo ec
-          INNER JOIN CatEquipoCampo cec ON ec.EquipoCampoID = cec.ID
-          WHERE ec.BrigadaID = @brigadaId
+          SELECT ec.*, cec.nombre as equipo_nombre
+          FROM equipo_campo ec
+          INNER JOIN cat_equipo_campo cec ON ec.equipo_campo_id = cec.id
+          WHERE ec.brigada_id = $1
         `;
         break;
-      case 'LimpiezaPersonal':
+      case 'limpieza_personal':
         query = `
-          SELECT lp.*, clp.Nombre as ProductoNombre
-          FROM LimpiezaPersonal lp
-          INNER JOIN CatLimpiezaPersonal clp ON lp.ProductoLimpiezaPersonalID = clp.ID
-          WHERE lp.BrigadaID = @brigadaId
+          SELECT lp.*, clp.nombre as producto_nombre
+          FROM limpieza_personal lp
+          INNER JOIN cat_limpieza_personal clp ON lp.producto_limpieza_personal_id = clp.id
+          WHERE lp.brigada_id = $1
         `;
         break;
-      case 'LimpiezaGeneral':
+      case 'limpieza_general':
         query = `
-          SELECT lg.*, clg.Nombre as ProductoNombre
-          FROM LimpiezaGeneral lg
-          INNER JOIN CatLimpiezaGeneral clg ON lg.ProductoLimpiezaGeneralID = clg.ID
-          WHERE lg.BrigadaID = @brigadaId
+          SELECT lg.*, clg.nombre as producto_nombre
+          FROM limpieza_general lg
+          INNER JOIN cat_limpieza_general clg ON lg.producto_limpieza_general_id = clg.id
+          WHERE lg.brigada_id = $1
         `;
         break;
-      case 'Medicamentos':
+      case 'medicamentos':
         query = `
-          SELECT m.*, cm.Nombre as MedicamentoNombre
-          FROM Medicamentos m
-          INNER JOIN CatMedicamentos cm ON m.MedicamentoID = cm.ID
-          WHERE m.BrigadaID = @brigadaId
+          SELECT m.*, cm.nombre as medicamento_nombre
+          FROM medicamentos m
+          INNER JOIN cat_medicamentos cm ON m.medicamento_id = cm.id
+          WHERE m.brigada_id = $1
         `;
         break;
-      case 'RescateAnimal':
+      case 'rescate_animal':
         query = `
-          SELECT ra.*, caa.Nombre as AlimentoNombre
-          FROM RescateAnimal ra
-          INNER JOIN CatAlimentosAnimales caa ON ra.AlimentoAnimalID = caa.ID
-          WHERE ra.BrigadaID = @brigadaId
+          SELECT ra.*, caa.nombre as alimento_nombre
+          FROM rescate_animal ra
+          INNER JOIN cat_alimentos_animales caa ON ra.alimento_animal_id = caa.id
+          WHERE ra.brigada_id = $1
         `;
         break;
     }
     
-    const result = await pool.request()
-      .input('brigadaId', sql.Int, brigadaId)
-      .query(query);
+    const result = await pool.query(query, [brigadaId]);
     
     res.json({
       success: true,
-      data: result.recordset
+      data: result.rows
     });
   } catch (error) {
     console.error(`Error al obtener ${tableName}:`, error);
@@ -348,139 +323,135 @@ const createEquipamientoGenerico = async (tableName, brigadaId, req, res) => {
   try {
     const pool = await getConnection();
     let query = '';
-    let inputs = {};
+    let values = [];
+    let paramIndex = 1;
     
     switch (tableName) {
-      case 'EquipamientoEPP':
-        inputs = {
-          EquipoEPPID: req.body.EquipoEPPID,
-          Cantidad: req.body.Cantidad || 0,
-          Observaciones: req.body.Observaciones
-        };
+      case 'equipamiento_epp':
         query = `
-          INSERT INTO EquipamientoEPP (BrigadaID, EquipoEPPID, Cantidad, Observaciones)
-          OUTPUT INSERTED.ID
-          VALUES (@brigadaId, @EquipoEPPID, @Cantidad, @Observaciones)
+          INSERT INTO equipamiento_epp (brigada_id, equipo_epp_id, cantidad, observaciones)
+          VALUES ($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3})
+          RETURNING id
         `;
+        values = [
+          brigadaId,
+          req.body.EquipoEPPID,
+          req.body.Cantidad || 0,
+          req.body.Observaciones
+        ];
         break;
-      case 'Herramientas':
-        inputs = {
-          HerramientaID: req.body.HerramientaID,
-          Cantidad: req.body.Cantidad || 0,
-          Observaciones: req.body.Observaciones
-        };
+      case 'herramientas':
         query = `
-          INSERT INTO Herramientas (BrigadaID, HerramientaID, Cantidad, Observaciones)
-          OUTPUT INSERTED.ID
-          VALUES (@brigadaId, @HerramientaID, @Cantidad, @Observaciones)
+          INSERT INTO herramientas (brigada_id, herramienta_id, cantidad, observaciones)
+          VALUES ($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3})
+          RETURNING id
         `;
+        values = [
+          brigadaId,
+          req.body.HerramientaID,
+          req.body.Cantidad || 0,
+          req.body.Observaciones
+        ];
         break;
-      case 'LogisticaVehiculos':
-        inputs = {
-          ServicioVehiculoID: req.body.ServicioVehiculoID,
-          MontoAproximado: req.body.MontoAproximado || 0,
-          Observaciones: req.body.Observaciones
-        };
+      case 'logistica_vehiculos':
         query = `
-          INSERT INTO LogisticaVehiculos (BrigadaID, ServicioVehiculoID, MontoAproximado, Observaciones)
-          OUTPUT INSERTED.ID
-          VALUES (@brigadaId, @ServicioVehiculoID, @MontoAproximado, @Observaciones)
+          INSERT INTO logistica_vehiculos (brigada_id, servicio_vehiculo_id, monto_aproximado, observaciones)
+          VALUES ($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3})
+          RETURNING id
         `;
+        values = [
+          brigadaId,
+          req.body.ServicioVehiculoID,
+          req.body.MontoAproximado || 0,
+          req.body.Observaciones
+        ];
         break;
-      case 'AlimentacionBebidas':
-        inputs = {
-          AlimentoBebidaID: req.body.AlimentoBebidaID,
-          Cantidad: req.body.Cantidad || 0,
-          Observaciones: req.body.Observaciones
-        };
+      case 'alimentacion_bebidas':
         query = `
-          INSERT INTO AlimentacionBebidas (BrigadaID, AlimentoBebidaID, Cantidad, Observaciones)
-          OUTPUT INSERTED.ID
-          VALUES (@brigadaId, @AlimentoBebidaID, @Cantidad, @Observaciones)
+          INSERT INTO alimentacion_bebidas (brigada_id, alimento_bebida_id, cantidad, observaciones)
+          VALUES ($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3})
+          RETURNING id
         `;
+        values = [
+          brigadaId,
+          req.body.AlimentoBebidaID,
+          req.body.Cantidad || 0,
+          req.body.Observaciones
+        ];
         break;
-      case 'EquipoCampo':
-        inputs = {
-          EquipoCampoID: req.body.EquipoCampoID,
-          Cantidad: req.body.Cantidad || 0,
-          Observaciones: req.body.Observaciones
-        };
+      case 'equipo_campo':
         query = `
-          INSERT INTO EquipoCampo (BrigadaID, EquipoCampoID, Cantidad, Observaciones)
-          OUTPUT INSERTED.ID
-          VALUES (@brigadaId, @EquipoCampoID, @Cantidad, @Observaciones)
+          INSERT INTO equipo_campo (brigada_id, equipo_campo_id, cantidad, observaciones)
+          VALUES ($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3})
+          RETURNING id
         `;
+        values = [
+          brigadaId,
+          req.body.EquipoCampoID,
+          req.body.Cantidad || 0,
+          req.body.Observaciones
+        ];
         break;
-      case 'LimpiezaPersonal':
-        inputs = {
-          ProductoLimpiezaPersonalID: req.body.ProductoLimpiezaPersonalID,
-          Cantidad: req.body.Cantidad || 0,
-          Observaciones: req.body.Observaciones
-        };
+      case 'limpieza_personal':
         query = `
-          INSERT INTO LimpiezaPersonal (BrigadaID, ProductoLimpiezaPersonalID, Cantidad, Observaciones)
-          OUTPUT INSERTED.ID
-          VALUES (@brigadaId, @ProductoLimpiezaPersonalID, @Cantidad, @Observaciones)
+          INSERT INTO limpieza_personal (brigada_id, producto_limpieza_personal_id, cantidad, observaciones)
+          VALUES ($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3})
+          RETURNING id
         `;
+        values = [
+          brigadaId,
+          req.body.ProductoLimpiezaPersonalID,
+          req.body.Cantidad || 0,
+          req.body.Observaciones
+        ];
         break;
-      case 'LimpiezaGeneral':
-        inputs = {
-          ProductoLimpiezaGeneralID: req.body.ProductoLimpiezaGeneralID,
-          Cantidad: req.body.Cantidad || 0,
-          Observaciones: req.body.Observaciones
-        };
+      case 'limpieza_general':
         query = `
-          INSERT INTO LimpiezaGeneral (BrigadaID, ProductoLimpiezaGeneralID, Cantidad, Observaciones)
-          OUTPUT INSERTED.ID
-          VALUES (@brigadaId, @ProductoLimpiezaGeneralID, @Cantidad, @Observaciones)
+          INSERT INTO limpieza_general (brigada_id, producto_limpieza_general_id, cantidad, observaciones)
+          VALUES ($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3})
+          RETURNING id
         `;
+        values = [
+          brigadaId,
+          req.body.ProductoLimpiezaGeneralID,
+          req.body.Cantidad || 0,
+          req.body.Observaciones
+        ];
         break;
-      case 'Medicamentos':
-        inputs = {
-          MedicamentoID: req.body.MedicamentoID,
-          Cantidad: req.body.Cantidad || 0,
-          Observaciones: req.body.Observaciones
-        };
+      case 'medicamentos':
         query = `
-          INSERT INTO Medicamentos (BrigadaID, MedicamentoID, Cantidad, Observaciones)
-          OUTPUT INSERTED.ID
-          VALUES (@brigadaId, @MedicamentoID, @Cantidad, @Observaciones)
+          INSERT INTO medicamentos (brigada_id, medicamento_id, cantidad, observaciones)
+          VALUES ($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3})
+          RETURNING id
         `;
+        values = [
+          brigadaId,
+          req.body.MedicamentoID,
+          req.body.Cantidad || 0,
+          req.body.Observaciones
+        ];
         break;
-      case 'RescateAnimal':
-        inputs = {
-          AlimentoAnimalID: req.body.AlimentoAnimalID,
-          Cantidad: req.body.Cantidad || 0,
-          Observaciones: req.body.Observaciones
-        };
+      case 'rescate_animal':
         query = `
-          INSERT INTO RescateAnimal (BrigadaID, AlimentoAnimalID, Cantidad, Observaciones)
-          OUTPUT INSERTED.ID
-          VALUES (@brigadaId, @AlimentoAnimalID, @Cantidad, @Observaciones)
+          INSERT INTO rescate_animal (brigada_id, alimento_animal_id, cantidad, observaciones)
+          VALUES ($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3})
+          RETURNING id
         `;
+        values = [
+          brigadaId,
+          req.body.AlimentoAnimalID,
+          req.body.Cantidad || 0,
+          req.body.Observaciones
+        ];
         break;
     }
     
-    const request = pool.request()
-      .input('brigadaId', sql.Int, brigadaId);
-    
-    // Agregar inputs dinámicamente
-    Object.keys(inputs).forEach(key => {
-      if (key.includes('ID')) {
-        request.input(key, sql.Int, inputs[key]);
-      } else if (key.includes('Cantidad') || key.includes('Monto')) {
-        request.input(key, sql.Decimal(10, 2), inputs[key]);
-      } else {
-        request.input(key, sql.NVarChar, inputs[key]);
-      }
-    });
-    
-    const result = await request.query(query);
+    const result = await pool.query(query, values);
     
     res.status(201).json({
       success: true,
       message: `${tableName} creado exitosamente`,
-      data: { ID: result.recordset[0].ID }
+      data: { id: result.rows[0].id }
     });
   } catch (error) {
     console.error(`Error al crear ${tableName}:`, error);
@@ -491,21 +462,105 @@ const createEquipamientoGenerico = async (tableName, brigadaId, req, res) => {
   }
 };
 
+const deleteEquipamientoRopa = async (req, res) => {
+  try {
+    const { brigadaId } = req.params;
+    const pool = await getConnection();
+    const result = await pool.query(`
+      DELETE FROM equipamiento_ropa
+      WHERE brigada_id = $1
+    `, [brigadaId]);
+    
+    res.json({
+      success: true,
+      message: 'Equipamiento de ropa eliminado exitosamente'
+    });
+  } catch (error) {
+    console.error('Error al eliminar equipamiento de ropa:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al eliminar el equipamiento de ropa'
+    });
+  }
+};
+
+const deleteEquipamientoBotas = async (req, res) => {
+  try {
+    const { brigadaId } = req.params;
+    const pool = await getConnection();
+    const result = await pool.query(`
+      DELETE FROM equipamiento_botas
+      WHERE brigada_id = $1
+    `, [brigadaId]);
+    
+    res.json({
+      success: true,
+      message: 'Equipamiento de botas eliminado exitosamente'
+    });
+  } catch (error) {
+    console.error('Error al eliminar equipamiento de botas:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al eliminar el equipamiento de botas'
+    });
+  }
+};
+
+const deleteEquipamientoGuantes = async (req, res) => {
+  try {
+    const { brigadaId } = req.params;
+    const pool = await getConnection();
+    const result = await pool.query(`
+      DELETE FROM equipamiento_guantes
+      WHERE brigada_id = $1
+    `, [brigadaId]);
+    
+    res.json({
+      success: true,
+      message: 'Equipamiento de guantes eliminado exitosamente'
+    });
+  } catch (error) {
+    console.error('Error al eliminar equipamiento de guantes:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al eliminar el equipamiento de guantes'
+    });
+  }
+};
+
+const deleteEquipamientoGenerico = async (tableName, brigadaId, res) => {
+  try {
+    const pool = await getConnection();
+    const result = await pool.query(`
+      DELETE FROM ${tableName}
+      WHERE brigada_id = $1
+    `, [brigadaId]);
+    
+    res.json({
+      success: true,
+      message: `Equipamiento de ${tableName} eliminado exitosamente`
+    });
+  } catch (error) {
+    console.error(`Error al eliminar equipamiento de ${tableName}:`, error);
+    res.status(500).json({
+      success: false,
+      message: `Error al eliminar el equipamiento de ${tableName}`
+    });
+  }
+};
+
 // Exportar controladores específicos
 module.exports = {
-  // Ropa
   getEquipamientoRopa,
   createEquipamientoRopa,
-  
-  // Botas
+  deleteEquipamientoRopa,
   getEquipamientoBotas,
   createEquipamientoBotas,
-  
-  // Guantes
+  deleteEquipamientoBotas,
   getEquipamientoGuantes,
   createEquipamientoGuantes,
-  
-  // Funciones genéricas
+  deleteEquipamientoGuantes,
   getEquipamientoGenerico,
-  createEquipamientoGenerico
+  createEquipamientoGenerico,
+  deleteEquipamientoGenerico
 }; 

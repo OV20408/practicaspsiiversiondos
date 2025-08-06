@@ -4,12 +4,16 @@ const { validateRequest } = require('../middleware/validation');
 const {
   getEquipamientoRopa,
   createEquipamientoRopa,
+  deleteEquipamientoRopa,
   getEquipamientoBotas,
   createEquipamientoBotas,
+  deleteEquipamientoBotas,
   getEquipamientoGuantes,
   createEquipamientoGuantes,
+  deleteEquipamientoGuantes,
   getEquipamientoGenerico,
-  createEquipamientoGenerico
+  createEquipamientoGenerico,
+  deleteEquipamientoGenerico
 } = require('../controllers/equipamientoController');
 
 const router = express.Router();
@@ -119,37 +123,48 @@ const guantesValidation = [
 
 router.get('/:brigadaId/ropa', getEquipamientoRopa);
 router.post('/:brigadaId/ropa', ropaValidation, validateRequest, createEquipamientoRopa);
+router.delete('/:brigadaId/ropa', deleteEquipamientoRopa);
 
 router.get('/:brigadaId/botas', getEquipamientoBotas);
 router.post('/:brigadaId/botas', botasValidation, validateRequest, createEquipamientoBotas);
+router.delete('/:brigadaId/botas', deleteEquipamientoBotas);
 
 router.get('/:brigadaId/guantes', getEquipamientoGuantes);
 router.post('/:brigadaId/guantes', guantesValidation, validateRequest, createEquipamientoGuantes);
+router.delete('/:brigadaId/guantes', deleteEquipamientoGuantes);
 
 router.get('/:brigadaId/epp', (req, res) => {
-  getEquipamientoGenerico('EquipamientoEPP', req.params.brigadaId, res);
+  getEquipamientoGenerico('equipamiento_epp', req.params.brigadaId, res);
 });
 
 router.post('/:brigadaId/epp', [
   body('EquipoEPPID').isInt({ min: 1 }).withMessage('El equipo EPP es requerido'),
   ...equipamientoValidation
 ], validateRequest, (req, res) => {
-  createEquipamientoGenerico('EquipamientoEPP', req.params.brigadaId, req, res);
+  createEquipamientoGenerico('equipamiento_epp', req.params.brigadaId, req, res);
+});
+
+router.delete('/:brigadaId/epp', (req, res) => {
+  deleteEquipamientoGenerico('equipamiento_epp', req.params.brigadaId, res);
 });
 
 router.get('/:brigadaId/herramientas', (req, res) => {
-  getEquipamientoGenerico('Herramientas', req.params.brigadaId, res);
+  getEquipamientoGenerico('herramientas', req.params.brigadaId, res);
 });
 
 router.post('/:brigadaId/herramientas', [
   body('HerramientaID').isInt({ min: 1 }).withMessage('La herramienta es requerida'),
   ...equipamientoValidation
 ], validateRequest, (req, res) => {
-  createEquipamientoGenerico('Herramientas', req.params.brigadaId, req, res);
+  createEquipamientoGenerico('herramientas', req.params.brigadaId, req, res);
+});
+
+router.delete('/:brigadaId/herramientas', (req, res) => {
+  deleteEquipamientoGenerico('herramientas', req.params.brigadaId, res);
 });
 
 router.get('/:brigadaId/logistica-vehiculos', (req, res) => {
-  getEquipamientoGenerico('LogisticaVehiculos', req.params.brigadaId, res);
+  getEquipamientoGenerico('logistica_vehiculos', req.params.brigadaId, res);
 });
 
 router.post('/:brigadaId/logistica-vehiculos', [
@@ -157,73 +172,101 @@ router.post('/:brigadaId/logistica-vehiculos', [
   body('MontoAproximado').optional().isFloat({ min: 0 }).withMessage('El monto debe ser un número positivo'),
   body('Observaciones').optional().isLength({ max: 500 }).withMessage('Las observaciones no pueden exceder 500 caracteres')
 ], validateRequest, (req, res) => {
-  createEquipamientoGenerico('LogisticaVehiculos', req.params.brigadaId, req, res);
+  createEquipamientoGenerico('logistica_vehiculos', req.params.brigadaId, req, res);
+});
+
+router.delete('/:brigadaId/logistica-vehiculos', (req, res) => {
+  deleteEquipamientoGenerico('logistica_vehiculos', req.params.brigadaId, res);
 });
 
 router.get('/:brigadaId/alimentacion', (req, res) => {
-  getEquipamientoGenerico('AlimentacionBebidas', req.params.brigadaId, res);
+  getEquipamientoGenerico('alimentacion_bebidas', req.params.brigadaId, res);
 });
 
 router.post('/:brigadaId/alimentacion', [
   body('AlimentoBebidaID').isInt({ min: 1 }).withMessage('El alimento o bebida es requerido'),
   ...equipamientoValidation
 ], validateRequest, (req, res) => {
-  createEquipamientoGenerico('AlimentacionBebidas', req.params.brigadaId, req, res);
+  createEquipamientoGenerico('alimentacion_bebidas', req.params.brigadaId, req, res);
+});
+
+router.delete('/:brigadaId/alimentacion', (req, res) => {
+  deleteEquipamientoGenerico('alimentacion_bebidas', req.params.brigadaId, res);
 });
 
 router.get('/:brigadaId/equipo-campo', (req, res) => {
-  getEquipamientoGenerico('EquipoCampo', req.params.brigadaId, res);
+  getEquipamientoGenerico('equipo_campo', req.params.brigadaId, res);
 });
 
 router.post('/:brigadaId/equipo-campo', [
   body('EquipoCampoID').isInt({ min: 1 }).withMessage('El equipo de campo es requerido'),
   ...equipamientoValidation
 ], validateRequest, (req, res) => {
-  createEquipamientoGenerico('EquipoCampo', req.params.brigadaId, req, res);
+  createEquipamientoGenerico('equipo_campo', req.params.brigadaId, req, res);
+});
+
+router.delete('/:brigadaId/equipo-campo', (req, res) => {
+  deleteEquipamientoGenerico('equipo_campo', req.params.brigadaId, res);
 });
 
 router.get('/:brigadaId/limpieza-personal', (req, res) => {
-  getEquipamientoGenerico('LimpiezaPersonal', req.params.brigadaId, res);
+  getEquipamientoGenerico('limpieza_personal', req.params.brigadaId, res);
 });
 
 router.post('/:brigadaId/limpieza-personal', [
   body('ProductoLimpiezaPersonalID').isInt({ min: 1 }).withMessage('El producto de limpieza personal es requerido'),
   ...equipamientoValidation
 ], validateRequest, (req, res) => {
-  createEquipamientoGenerico('LimpiezaPersonal', req.params.brigadaId, req, res);
+  createEquipamientoGenerico('limpieza_personal', req.params.brigadaId, req, res);
+});
+
+router.delete('/:brigadaId/limpieza-personal', (req, res) => {
+  deleteEquipamientoGenerico('limpieza_personal', req.params.brigadaId, res);
 });
 
 router.get('/:brigadaId/limpieza-general', (req, res) => {
-  getEquipamientoGenerico('LimpiezaGeneral', req.params.brigadaId, res);
+  getEquipamientoGenerico('limpieza_general', req.params.brigadaId, res);
 });
 
 router.post('/:brigadaId/limpieza-general', [
   body('ProductoLimpiezaGeneralID').isInt({ min: 1 }).withMessage('El producto de limpieza general es requerido'),
   ...equipamientoValidation
 ], validateRequest, (req, res) => {
-  createEquipamientoGenerico('LimpiezaGeneral', req.params.brigadaId, req, res);
+  createEquipamientoGenerico('limpieza_general', req.params.brigadaId, req, res);
+});
+
+router.delete('/:brigadaId/limpieza-general', (req, res) => {
+  deleteEquipamientoGenerico('limpieza_general', req.params.brigadaId, res);
 });
 
 router.get('/:brigadaId/medicamentos', (req, res) => {
-  getEquipamientoGenerico('Medicamentos', req.params.brigadaId, res);
+  getEquipamientoGenerico('medicamentos', req.params.brigadaId, res);
 });
 
 router.post('/:brigadaId/medicamentos', [
   body('MedicamentoID').isInt({ min: 1 }).withMessage('El medicamento es requerido'),
   ...equipamientoValidation
 ], validateRequest, (req, res) => {
-  createEquipamientoGenerico('Medicamentos', req.params.brigadaId, req, res);
+  createEquipamientoGenerico('medicamentos', req.params.brigadaId, req, res);
+});
+
+router.delete('/:brigadaId/medicamentos', (req, res) => {
+  deleteEquipamientoGenerico('medicamentos', req.params.brigadaId, res);
 });
 
 router.get('/:brigadaId/rescate-animal', (req, res) => {
-  getEquipamientoGenerico('RescateAnimal', req.params.brigadaId, res);
+  getEquipamientoGenerico('rescate_animal', req.params.brigadaId, res);
 });
 
 router.post('/:brigadaId/rescate-animal', [
   body('AlimentoAnimalID').isInt({ min: 1 }).withMessage('El alimento para animales es requerido'),
   ...equipamientoValidation
 ], validateRequest, (req, res) => {
-  createEquipamientoGenerico('RescateAnimal', req.params.brigadaId, req, res);
+  createEquipamientoGenerico('rescate_animal', req.params.brigadaId, req, res);
+});
+
+router.delete('/:brigadaId/rescate-animal', (req, res) => {
+  deleteEquipamientoGenerico('rescate_animal', req.params.brigadaId, res);
 });
 
 module.exports = router; 

@@ -1,15 +1,14 @@
-const { getConnection, sql } = require('../config/database');
+const { getConnection } = require('../config/database');
 
 // Función genérica para obtener catálogos
 const getCatalogo = async (tableName, req, res) => {
   try {
     const pool = await getConnection();
-    const result = await pool.request()
-      .query(`SELECT * FROM ${tableName} WHERE Activo = 1 ORDER BY Nombre`);
+    const result = await pool.query(`SELECT * FROM ${tableName} WHERE activo = true ORDER BY nombre`);
     
     res.json({
       success: true,
-      data: result.recordset
+      data: result.rows
     });
   } catch (error) {
     console.error(`Error al obtener catálogo ${tableName}:`, error);
@@ -25,19 +24,16 @@ const createCatalogoItem = async (tableName, req, res) => {
   try {
     const { Nombre, Descripcion } = req.body;
     const pool = await getConnection();
-    const result = await pool.request()
-      .input('Nombre', sql.NVarChar, Nombre)
-      .input('Descripcion', sql.NVarChar, Descripcion)
-      .query(`
-        INSERT INTO ${tableName} (Nombre, Descripcion)
-        OUTPUT INSERTED.ID, INSERTED.Nombre
-        VALUES (@Nombre, @Descripcion)
-      `);
+    const result = await pool.query(`
+      INSERT INTO ${tableName} (nombre, descripcion)
+      VALUES ($1, $2)
+      RETURNING id, nombre
+    `, [Nombre, Descripcion]);
     
     res.status(201).json({
       success: true,
       message: 'Elemento creado exitosamente',
-      data: result.recordset[0]
+      data: result.rows[0]
     });
   } catch (error) {
     console.error(`Error al crear elemento en ${tableName}:`, error);
@@ -54,17 +50,13 @@ const updateCatalogoItem = async (tableName, req, res) => {
     const { id } = req.params;
     const { Nombre, Descripcion } = req.body;
     const pool = await getConnection();
-    const result = await pool.request()
-      .input('id', sql.Int, id)
-      .input('Nombre', sql.NVarChar, Nombre)
-      .input('Descripcion', sql.NVarChar, Descripcion)
-      .query(`
-        UPDATE ${tableName}
-        SET Nombre = @Nombre, Descripcion = @Descripcion
-        WHERE ID = @id AND Activo = 1
-      `);
+    const result = await pool.query(`
+      UPDATE ${tableName}
+      SET nombre = $1, descripcion = $2
+      WHERE id = $3 AND activo = true
+    `, [Nombre, Descripcion, id]);
     
-    if (result.rowsAffected[0] === 0) {
+    if (result.rowCount === 0) {
       return res.status(404).json({
         success: false,
         message: 'Elemento no encontrado'
@@ -89,11 +81,9 @@ const deleteCatalogoItem = async (tableName, req, res) => {
   try {
     const { id } = req.params;
     const pool = await getConnection();
-    const result = await pool.request()
-      .input('id', sql.Int, id)
-      .query(`UPDATE ${tableName} SET Activo = 0 WHERE ID = @id AND Activo = 1`);
+    const result = await pool.query(`UPDATE ${tableName} SET activo = false WHERE id = $1 AND activo = true`, [id]);
     
-    if (result.rowsAffected[0] === 0) {
+    if (result.rowCount === 0) {
       return res.status(404).json({
         success: false,
         message: 'Elemento no encontrado'
@@ -115,73 +105,73 @@ const deleteCatalogoItem = async (tableName, req, res) => {
 
 // Controladores específicos para cada catálogo
 const tiposRopa = {
-  getAll: (req, res) => getCatalogo('CatTiposRopa', req, res),
-  create: (req, res) => createCatalogoItem('CatTiposRopa', req, res),
-  update: (req, res) => updateCatalogoItem('CatTiposRopa', req, res),
-  delete: (req, res) => deleteCatalogoItem('CatTiposRopa', req, res)
+  getAll: (req, res) => getCatalogo('cat_tipos_ropa', req, res),
+  create: (req, res) => createCatalogoItem('cat_tipos_ropa', req, res),
+  update: (req, res) => updateCatalogoItem('cat_tipos_ropa', req, res),
+  delete: (req, res) => deleteCatalogoItem('cat_tipos_ropa', req, res)
 };
 
 const equipamientoEPP = {
-  getAll: (req, res) => getCatalogo('CatEquipamientoEPP', req, res),
-  create: (req, res) => createCatalogoItem('CatEquipamientoEPP', req, res),
-  update: (req, res) => updateCatalogoItem('CatEquipamientoEPP', req, res),
-  delete: (req, res) => deleteCatalogoItem('CatEquipamientoEPP', req, res)
+  getAll: (req, res) => getCatalogo('cat_equipamiento_epp', req, res),
+  create: (req, res) => createCatalogoItem('cat_equipamiento_epp', req, res),
+  update: (req, res) => updateCatalogoItem('cat_equipamiento_epp', req, res),
+  delete: (req, res) => deleteCatalogoItem('cat_equipamiento_epp', req, res)
 };
 
 const herramientas = {
-  getAll: (req, res) => getCatalogo('CatHerramientas', req, res),
-  create: (req, res) => createCatalogoItem('CatHerramientas', req, res),
-  update: (req, res) => updateCatalogoItem('CatHerramientas', req, res),
-  delete: (req, res) => deleteCatalogoItem('CatHerramientas', req, res)
+  getAll: (req, res) => getCatalogo('cat_herramientas', req, res),
+  create: (req, res) => createCatalogoItem('cat_herramientas', req, res),
+  update: (req, res) => updateCatalogoItem('cat_herramientas', req, res),
+  delete: (req, res) => deleteCatalogoItem('cat_herramientas', req, res)
 };
 
 const serviciosVehiculos = {
-  getAll: (req, res) => getCatalogo('CatServiciosVehiculos', req, res),
-  create: (req, res) => createCatalogoItem('CatServiciosVehiculos', req, res),
-  update: (req, res) => updateCatalogoItem('CatServiciosVehiculos', req, res),
-  delete: (req, res) => deleteCatalogoItem('CatServiciosVehiculos', req, res)
+  getAll: (req, res) => getCatalogo('cat_servicios_vehiculos', req, res),
+  create: (req, res) => createCatalogoItem('cat_servicios_vehiculos', req, res),
+  update: (req, res) => updateCatalogoItem('cat_servicios_vehiculos', req, res),
+  delete: (req, res) => deleteCatalogoItem('cat_servicios_vehiculos', req, res)
 };
 
 const alimentosBebidas = {
-  getAll: (req, res) => getCatalogo('CatAlimentosBebidas', req, res),
-  create: (req, res) => createCatalogoItem('CatAlimentosBebidas', req, res),
-  update: (req, res) => updateCatalogoItem('CatAlimentosBebidas', req, res),
-  delete: (req, res) => deleteCatalogoItem('CatAlimentosBebidas', req, res)
+  getAll: (req, res) => getCatalogo('cat_alimentos_bebidas', req, res),
+  create: (req, res) => createCatalogoItem('cat_alimentos_bebidas', req, res),
+  update: (req, res) => updateCatalogoItem('cat_alimentos_bebidas', req, res),
+  delete: (req, res) => deleteCatalogoItem('cat_alimentos_bebidas', req, res)
 };
 
 const equipoCampo = {
-  getAll: (req, res) => getCatalogo('CatEquipoCampo', req, res),
-  create: (req, res) => createCatalogoItem('CatEquipoCampo', req, res),
-  update: (req, res) => updateCatalogoItem('CatEquipoCampo', req, res),
-  delete: (req, res) => deleteCatalogoItem('CatEquipoCampo', req, res)
+  getAll: (req, res) => getCatalogo('cat_equipo_campo', req, res),
+  create: (req, res) => createCatalogoItem('cat_equipo_campo', req, res),
+  update: (req, res) => updateCatalogoItem('cat_equipo_campo', req, res),
+  delete: (req, res) => deleteCatalogoItem('cat_equipo_campo', req, res)
 };
 
 const limpiezaPersonal = {
-  getAll: (req, res) => getCatalogo('CatLimpiezaPersonal', req, res),
-  create: (req, res) => createCatalogoItem('CatLimpiezaPersonal', req, res),
-  update: (req, res) => updateCatalogoItem('CatLimpiezaPersonal', req, res),
-  delete: (req, res) => deleteCatalogoItem('CatLimpiezaPersonal', req, res)
+  getAll: (req, res) => getCatalogo('cat_limpieza_personal', req, res),
+  create: (req, res) => createCatalogoItem('cat_limpieza_personal', req, res),
+  update: (req, res) => updateCatalogoItem('cat_limpieza_personal', req, res),
+  delete: (req, res) => deleteCatalogoItem('cat_limpieza_personal', req, res)
 };
 
 const limpiezaGeneral = {
-  getAll: (req, res) => getCatalogo('CatLimpiezaGeneral', req, res),
-  create: (req, res) => createCatalogoItem('CatLimpiezaGeneral', req, res),
-  update: (req, res) => updateCatalogoItem('CatLimpiezaGeneral', req, res),
-  delete: (req, res) => deleteCatalogoItem('CatLimpiezaGeneral', req, res)
+  getAll: (req, res) => getCatalogo('cat_limpieza_general', req, res),
+  create: (req, res) => createCatalogoItem('cat_limpieza_general', req, res),
+  update: (req, res) => updateCatalogoItem('cat_limpieza_general', req, res),
+  delete: (req, res) => deleteCatalogoItem('cat_limpieza_general', req, res)
 };
 
 const medicamentos = {
-  getAll: (req, res) => getCatalogo('CatMedicamentos', req, res),
-  create: (req, res) => createCatalogoItem('CatMedicamentos', req, res),
-  update: (req, res) => updateCatalogoItem('CatMedicamentos', req, res),
-  delete: (req, res) => deleteCatalogoItem('CatMedicamentos', req, res)
+  getAll: (req, res) => getCatalogo('cat_medicamentos', req, res),
+  create: (req, res) => createCatalogoItem('cat_medicamentos', req, res),
+  update: (req, res) => updateCatalogoItem('cat_medicamentos', req, res),
+  delete: (req, res) => deleteCatalogoItem('cat_medicamentos', req, res)
 };
 
 const alimentosAnimales = {
-  getAll: (req, res) => getCatalogo('CatAlimentosAnimales', req, res),
-  create: (req, res) => createCatalogoItem('CatAlimentosAnimales', req, res),
-  update: (req, res) => updateCatalogoItem('CatAlimentosAnimales', req, res),
-  delete: (req, res) => deleteCatalogoItem('CatAlimentosAnimales', req, res)
+  getAll: (req, res) => getCatalogo('cat_alimentos_animales', req, res),
+  create: (req, res) => createCatalogoItem('cat_alimentos_animales', req, res),
+  update: (req, res) => updateCatalogoItem('cat_alimentos_animales', req, res),
+  delete: (req, res) => deleteCatalogoItem('cat_alimentos_animales', req, res)
 };
 
 module.exports = {
